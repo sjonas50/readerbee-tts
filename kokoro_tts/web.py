@@ -36,6 +36,7 @@ class SynthesizeRequest(BaseModel):
     voice: str = "af_heart"
     speed: float = 1.0
     lang: str = "en-us"
+    format: str = "mp3"
 
 
 def get_voice_language(voice_name: str) -> str:
@@ -119,15 +120,35 @@ async def synthesize(req: SynthesizeRequest):
     except Exception as e:
         raise HTTPException(500, f"Synthesis failed: {e}")
 
-    # Write WAV to memory buffer
+    fmt = req.format.lower()
+    if fmt not in ("wav", "mp3"):
+        raise HTTPException(400, "Format must be 'wav' or 'mp3'")
+
     buf = io.BytesIO()
-    sf.write(buf, samples, sample_rate, format="WAV")
+
+    if fmt == "mp3":
+        import lameenc
+        encoder = lameenc.Encoder()
+        encoder.set_bit_rate(192)
+        encoder.set_in_sample_rate(sample_rate)
+        encoder.set_channels(1)
+        encoder.set_quality(2)
+        pcm = (samples * 32767).astype(np.int16).tobytes()
+        buf.write(encoder.encode(pcm))
+        buf.write(encoder.flush())
+        media_type = "audio/mpeg"
+        filename = "readerbee_tts_output.mp3"
+    else:
+        sf.write(buf, samples, sample_rate, format="WAV")
+        media_type = "audio/wav"
+        filename = "readerbee_tts_output.wav"
+
     buf.seek(0)
 
     return StreamingResponse(
         buf,
-        media_type="audio/wav",
-        headers={"Content-Disposition": "attachment; filename=kokoro_tts_output.wav"},
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
