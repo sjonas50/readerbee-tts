@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReaderBee TTS</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 640px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.35rem;
+  }
+
+  .row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .row > div { flex: 1; }
+
+  select, textarea {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    background: #fafafa;
+    color: #1a1a1a;
+    transition: border-color 0.15s;
+  }
+
+  select:focus, textarea:focus {
+    outline: none;
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.15);
+  }
+
+  textarea {
+    min-height: 140px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  .blend-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .blend-toggle input[type="checkbox"] {
+    accent-color: #4a90d9;
+    width: 16px;
+    height: 16px;
+  }
+
+  .blend-toggle label {
+    display: inline;
+    text-transform: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #1a1a1a;
+    letter-spacing: 0;
+    margin-bottom: 0;
+    cursor: pointer;
+  }
+
+  .blend-panel {
+    display: none;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f0f4f8;
+    border-radius: 8px;
+    border: 1px solid #d8e2ed;
+  }
+
+  .blend-panel.visible { display: block; }
+
+  .blend-weight-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .blend-weight-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #555;
+    min-width: 3.5rem;
+    text-align: center;
+  }
+
+  .speed-group { margin-bottom: 1rem; }
+
+  .speed-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    accent-color: #4a90d9;
+    height: 6px;
+  }
+
+  .speed-val {
+    font-size: 0.9rem;
+    font-weight: 600;
+    min-width: 2.5rem;
+    text-align: center;
+    color: #333;
+  }
+
+  .text-group { margin-bottom: 1rem; }
+
+  .char-count {
+    text-align: right;
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 0.25rem;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+    background: #4a90d9;
+    color: #fff;
+  }
+
+  .btn:hover { background: #3a7bc8; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .result {
+    display: none;
+    margin-top: 1rem;
+  }
+
+  .result.visible { display: block; }
+
+  audio {
+    width: 100%;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: center;
+    padding: 0.65rem 1rem;
+    border: 2px solid #4a90d9;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #4a90d9;
+    background: transparent;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .download-btn:hover {
+    background: #4a90d9;
+    color: #fff;
+  }
+
+  .download-btn svg { flex-shrink: 0; }
+
+  .error {
+    display: none;
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #b91c1c;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+  }
+
+  .error.visible { display: block; }
+
+  .status {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: 0.5rem;
+    display: none;
+  }
+
+  .status.visible { display: block; }
+
+  @media (prefers-color-scheme: dark) {
+    body { background: #1a1a1a; color: #e5e5e5; }
+    .card { background: #2a2a2a; border-color: #3a3a3a; }
+    select, textarea { background: #333; border-color: #444; color: #e5e5e5; }
+    select:focus, textarea:focus { border-color: #5a9fe6; box-shadow: 0 0 0 3px rgba(90, 159, 230, 0.2); }
+    .speed-val { color: #ccc; }
+    .error { background: #3b1111; border-color: #7f1d1d; color: #fca5a5; }
+    label { color: #999; }
+    .blend-toggle label { color: #e5e5e5; }
+    .blend-panel { background: #333; border-color: #444; }
+    .blend-weight-label { color: #ccc; }
+    .download-btn { color: #5a9fe6; border-color: #5a9fe6; }
+    .download-btn:hover { background: #5a9fe6; color: #1a1a1a; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>ReaderBee TTS</h1>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label for="lang">Language</label>
+        <select id="lang"></select>
+      </div>
+      <div>
+        <label for="voice">Voice</label>
+        <select id="voice"></select>
+      </div>
+    </div>
+
+    <div class="blend-toggle">
+      <input type="checkbox" id="blend-toggle">
+      <label for="blend-toggle">Blend two voices</label>
+    </div>
+
+    <div class="blend-panel" id="blend-panel">
+      <div class="row" style="margin-bottom:0">
+        <div>
+          <label for="voice2-lang">Voice 2 Language</label>
+          <select id="voice2-lang"></select>
+        </div>
+        <div>
+          <label for="voice2">Voice 2</label>
+          <select id="voice2"></select>
+        </div>
+      </div>
+      <div class="blend-weight-row">
+        <span class="blend-weight-label" id="w1-label">50%</span>
+        <input type="range" id="blend-weight" min="0" max="100" step="5" value="50">
+        <span class="blend-weight-label" id="w2-label">50%</span>
+      </div>
+    </div>
+
+    <div class="speed-group">
+      <label for="speed">Speed</label>
+      <div class="speed-row">
+        <input type="range" id="speed" min="0.5" max="2.0" step="0.1" value="1.0">
+        <span class="speed-val" id="speed-val">1.0x</span>
+      </div>
+    </div>
+
+    <div class="text-group">
+      <label for="text">Text</label>
+      <textarea id="text" placeholder="Type or paste text here..."></textarea>
+      <div class="char-count"><span id="char-count">0</span> / 10,000</div>
+    </div>
+
+    <button class="btn" id="generate" disabled>Generate Speech</button>
+
+    <div class="status" id="status">Generating audio...</div>
+
+    <div class="error" id="error"></div>
+
+    <div class="result" id="result">
+      <audio id="audio" controls></audio>
+      <a class="download-btn" id="download" download="kokoro_tts_output.wav">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download WAV
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+
+let allVoices = {};   // { "en-us": ["af_alloy", ...], ... }
+let audioUrl = null;  // current blob URL
+
+const langEl       = $("#lang");
+const voiceEl      = $("#voice");
+const blendToggle  = $("#blend-toggle");
+const blendPanel   = $("#blend-panel");
+const voice2LangEl = $("#voice2-lang");
+const voice2El     = $("#voice2");
+const blendWeight  = $("#blend-weight");
+const w1Label      = $("#w1-label");
+const w2Label      = $("#w2-label");
+const speedEl      = $("#speed");
+const speedVal     = $("#speed-val");
+const textEl       = $("#text");
+const charCount    = $("#char-count");
+const genBtn       = $("#generate");
+const statusEl     = $("#status");
+const errorEl      = $("#error");
+const resultEl     = $("#result");
+const audioEl      = $("#audio");
+const dlEl         = $("#download");
+
+// --- Init ---
+async function init() {
+  try {
+    const [langRes, voiceRes] = await Promise.all([
+      fetch("/api/languages").then(r => r.json()),
+      fetch("/api/voices").then(r => r.json()),
+    ]);
+
+    allVoices = voiceRes.voices;
+
+    // Populate language dropdown
+    langEl.innerHTML = "";
+    for (const lang of langRes.languages) {
+      const opt = document.createElement("option");
+      opt.value = lang;
+      opt.textContent = lang;
+      langEl.appendChild(opt);
+    }
+
+    // Default to en-us if available
+    if (langRes.languages.includes("en-us")) {
+      langEl.value = "en-us";
+    }
+
+    // Populate voice 2 language dropdown (same list)
+    voice2LangEl.innerHTML = "";
+    for (const lang of langRes.languages) {
+      const opt = document.createElement("option");
+      opt.value = lang;
+      opt.textContent = lang;
+      voice2LangEl.appendChild(opt);
+    }
+    if (langRes.languages.includes("en-us")) {
+      voice2LangEl.value = "en-us";
+    }
+
+    updateVoices();
+    updateVoices2();
+    genBtn.disabled = false;
+  } catch (e) {
+    showError("Failed to connect to server. Is the backend running?");
+  }
+}
+
+function populateSelect(selectEl, voices) {
+  selectEl.innerHTML = "";
+  for (const v of voices) {
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v;
+    selectEl.appendChild(opt);
+  }
+}
+
+function updateVoices() {
+  populateSelect(voiceEl, allVoices[langEl.value] || []);
+}
+
+function updateVoices2() {
+  populateSelect(voice2El, allVoices[voice2LangEl.value] || []);
+}
+
+function showError(msg) {
+  errorEl.textContent = msg;
+  errorEl.classList.add("visible");
+}
+
+function hideError() {
+  errorEl.classList.remove("visible");
+}
+
+// --- Events ---
+langEl.addEventListener("change", updateVoices);
+voice2LangEl.addEventListener("change", updateVoices2);
+
+blendToggle.addEventListener("change", () => {
+  blendPanel.classList.toggle("visible", blendToggle.checked);
+});
+
+blendWeight.addEventListener("input", () => {
+  const w1 = parseInt(blendWeight.value);
+  w1Label.textContent = w1 + "%";
+  w2Label.textContent = (100 - w1) + "%";
+});
+
+speedEl.addEventListener("input", () => {
+  speedVal.textContent = parseFloat(speedEl.value).toFixed(1) + "x";
+});
+
+textEl.addEventListener("input", () => {
+  charCount.textContent = textEl.value.length;
+});
+
+genBtn.addEventListener("click", async () => {
+  const text = textEl.value.trim();
+  if (!text) { showError("Please enter some text."); return; }
+  if (text.length > 10000) { showError("Text exceeds 10,000 character limit."); return; }
+
+  hideError();
+  resultEl.classList.remove("visible");
+  statusEl.classList.add("visible");
+  genBtn.disabled = true;
+
+  // Revoke previous blob URL
+  if (audioUrl) { URL.revokeObjectURL(audioUrl); audioUrl = null; }
+
+  // Build voice param — single or blended
+  let voiceParam = voiceEl.value;
+  if (blendToggle.checked && voice2El.value) {
+    const w1 = parseInt(blendWeight.value);
+    const w2 = 100 - w1;
+    voiceParam = `${voiceEl.value}:${w1},${voice2El.value}:${w2}`;
+  }
+
+  try {
+    const res = await fetch("/api/synthesize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: text,
+        voice: voiceParam,
+        speed: parseFloat(speedEl.value),
+        lang: langEl.value,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: "Unknown error" }));
+      throw new Error(err.detail || `Server error (${res.status})`);
+    }
+
+    const blob = await res.blob();
+    audioUrl = URL.createObjectURL(blob);
+    audioEl.src = audioUrl;
+    dlEl.href = audioUrl;
+    resultEl.classList.add("visible");
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    statusEl.classList.remove("visible");
+    genBtn.disabled = false;
+  }
+});
+
+init();
+</script>
+</body>
+</html>

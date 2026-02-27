@@ -1,0 +1,28 @@
+[project]
+name = "readerbee-tts"
+version = "1.0.0"
+description = "ReaderBee TTS — a web-based text-to-speech tool with voice blending, powered by the Kokoro model."
+requires-python = ">=3.9, <3.13"
+license = {text = "MIT"}
+keywords = ["text-to-speech", "tts", "kokoro", "audio", "web"]
+dependencies = [
+    "beautifulsoup4>=4.12.3",
+    "ebooklib>=0.18",
+    "kokoro-onnx==0.3.9",
+    "pymupdf>=1.25.4",
+    "pymupdf4llm>=0.0.17",
+    "sounddevice>=0.5.1",
+    "soundfile>=0.13.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+]
+
+[project.scripts]
+readerbee-tts = "kokoro_tts.web:main"
+
+[project.urls]
+Repository = "https://github.com/sjonas50/readerbee-tts"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

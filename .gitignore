@@ -1,0 +1,15 @@
+# Model files (too large for git)
+kokoro-v1.0.onnx
+voices-v1.0.bin
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# OS
+.DS_Store
