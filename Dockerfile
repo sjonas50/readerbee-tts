@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install system deps for soundfile/sounddevice
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends libsndfile1 curl && \
+    apt-get install -y --no-install-recommends libsndfile1 libportaudio2 curl && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
